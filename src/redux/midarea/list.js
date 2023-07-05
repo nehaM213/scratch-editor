@@ -1,12 +1,13 @@
-import { ADD_LIST, SET_LIST } from "./types";
+import { ADD_LIST, SET_LIST, SET_ACTIVE_BLOCK, DELETE_BLOCK } from "./types";
 
 const initialState = {
   midAreaLists: [
     {
-      id: "midAreaList-0",
+      id: "block-0",
       comps: ["MOVE"],
     },
   ],
+  active: "block-0",
 };
 
 export const listReducer = (state = initialState, action) => {
@@ -22,10 +23,28 @@ export const listReducer = (state = initialState, action) => {
         midAreaLists: all_lists,
       };
 
+    case SET_ACTIVE_BLOCK:
+      // console.log("actibe-",initialState.active);
+      return {
+        ...state,
+        active: action.id,
+      };
+    case DELETE_BLOCK:
+      let old_lis = state.midAreaLists;
+      let new_list_ad = old_lis.filter((el)=>{
+        if(el.id==action.id){
+          return false;
+        }
+        return true;
+      })
+      return {
+        midAreaLists: new_list_ad,
+      };
+
     case ADD_LIST:
       let old_list = state.midAreaLists;
       let new_list_add = {
-        id: `midAreaList-${state.midAreaLists.length}`,
+        id: `block-${state.midAreaLists.length}`,
         comps: ["MOVE"],
       };
       old_list.push(new_list_add);

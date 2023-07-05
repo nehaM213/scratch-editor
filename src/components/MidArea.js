@@ -1,14 +1,23 @@
 import React from "react";
 import { connect } from "react-redux";
-import { addList } from "../redux/midarea/actions";
+import { addList, deleteBlock } from "../redux/midarea/actions";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { getComponent } from "./getComponents";
 import { createStyles, makeStyles, withStyles } from "@material-ui/core/styles";
+import { setActive } from "../redux/midarea/actions";
 import Button from "@material-ui/core/Button";
 import AddIcon from "@material-ui/icons/Add";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import { purple } from "@material-ui/core/colors";
 import Paper from "@material-ui/core/Paper";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import { useState } from "react";
+import { Delete } from "@material-ui/icons";
+import { useEffect } from "react";
+
 
 // Styling for MaterialUI Components
 const useStyles = makeStyles(() =>
@@ -32,8 +41,10 @@ const RunButton = withStyles((theme) => ({
 }))(Button);
 
 // Mid Area Component
-function MidArea({ area_list, add_list, event_values }) {
+function MidArea({ area_list, add_list, event_values, set_active, delete_block}) {
+  const [deleteB, setDeleteB]=useState(false);
   const classes = useStyles();
+  const [active, setActive] = useState(area_list.active);
   const eventFire = (el, etype) => {
     if (el && el.fireEvent) {
       el.fireEvent("on" + etype);
@@ -107,71 +118,129 @@ function MidArea({ area_list, add_list, event_values }) {
       }
     }, 2000);
   };
+  const deleteHandler=(id)=>{
+    setDeleteB(!deleteB);
+    delete_block(id);
+  }
+  const handleChange = (e) => {
+    // console.log(active);
+    setActive(e.target.value);
+    set_active(e.target.value);
+  };
   return (
     <div className="flex-1 h-full overflow-auto p-3">
       <div className="flex justify-between">
-        <div className="font-bold mb-5 text-center border border-2 rounded text-black p-2 w-auto">
+        <div className="font-bold mb-5 text-center border-2 rounded text-black p-2 w-auto">
           Mid Area
         </div>
-
+        {/* ---- */}
+        <div>
+          <FormControl className={classes.formControl}>
+            <InputLabel shrink id="demo-simple-select-placeholder-label-label">
+              Active
+            </InputLabel>
+            <Select
+              labelId="demo-simple-select-placeholder-label-label"
+              id="demo-simple-select-placeholder-label"
+              value={active}
+              onChange={(e) => handleChange(e)}
+              displayEmpty
+              className={classes.selectEmpty}
+            >
+              {area_list.midAreaLists.map((el) => {
+                return (
+                  <MenuItem key={el.id} value={el.id}>
+                    {el.id}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
+        </div>
+        <div>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.button}
+            startIcon={<AddIcon />}
+            onClick={() => add_list()}
+          >
+            Code Block{" "}
+          </Button>
+        </div>
+        {/* ---- */}
       </div>
       <div className="grid grid-flow-col">
         {area_list.midAreaLists.map((l) => {
+
           return (
-            <div className="h-screen" key={l.id}>
-              <Paper elevation={3} className="p-4 h-full ">
-                <div className="h-full">
-                  <Droppable droppableId={l.id} type="COMPONENTS">
-                    {(provided) => {
-                      return (
-                        <ul
-                          className={`${l.id} `}
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                        >
-                          <div className="text-center mx-auto my-2 mb-4">
-                            <RunButton
-                              variant="contained"
-                              className={classes.button}
-                              startIcon={<PlayArrowIcon />}
-                              onClick={() => handleClick(l.comps, l.id)}
+            <>
+              {active === l.id ? (
+                <div className="h-screen" key={l.id}>
+                  <Paper elevation={3} className="p-4 h-full ">
+                    <div className="h-full">
+                      <Droppable droppableId={l.id} type="COMPONENTS">
+                        {(provided) => {
+                          return (
+                            <ul
+                              className={`${l.id} `}
+                              {...provided.droppableProps}
+                              ref={provided.innerRef}
                             >
-                              Run{" "}
-                            </RunButton>
-                          </div>
-
-                          {l.comps &&
-                            l.comps.map((x, i) => {
-                              let str = `${x}`;
-                              let component_id = `comp${str}-${l.id}-${i}`;
-
-                              return (
-                                <Draggable
-                                  key={`${str}-${l.id}-${i}`}
-                                  draggableId={`${str}-${l.id}-${i}`}
-                                  index={i}
+                              <div className="text-center mx-auto my-2 mb-4">
+                                <RunButton
+                                  variant="contained"
+                                  className={classes.button}
+                                  startIcon={<PlayArrowIcon />}
+                                  onClick={() => handleClick(l.comps, l.id)}
                                 >
-                                  {(provided) => (
-                                    <li
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
+                                  Run{" "}
+                                </RunButton>
+                                <button
+                                  onClick={() => {
+                                    deleteHandler(l.id);
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+
+                              {l.comps &&
+                                l.comps.map((x, i) => {
+                                  let str = `${x}`;
+                                  let component_id = `comp${str}-${l.id}-${i}`;
+
+                                  return (
+                                    <Draggable
+                                      key={`${str}-${l.id}-${i}`}
+                                      draggableId={`${str}-${l.id}-${i}`}
+                                      index={i}
                                     >
-                                      {getComponent(str, component_id)}
-                                      {provided.placeholder}
-                                    </li>
-                                  )}
-                                </Draggable>
-                              );
-                            })}
-                          {provided.placeholder}
-                        </ul>
-                      );
-                    }}
-                  </Droppable>
+                                      {(provided) => (
+                                        <li
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                        >
+                                          {getComponent(str, component_id)}
+                                          {provided.placeholder}
+                                        </li>
+                                      )}
+                                    </Draggable>
+                                  );
+                                })}
+                              {provided.placeholder}
+                            </ul>
+                          );
+                        }}
+                      </Droppable>
+                    </div>
+                  </Paper>
                 </div>
-              </Paper>
-            </div>
+              ) : (
+                ""
+              )}
+            </>
           );
         })}
       </div>
@@ -184,12 +253,15 @@ const mapStateToProps = (state) => {
   return {
     area_list: state.list,
     event_values: state.event,
+
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
     add_list: () => dispatch(addList()),
+    delete_block:(id)=>dispatch(deleteBlock(id)),
+    set_active: (id) => dispatch(setActive(id)),
   };
 };
 
